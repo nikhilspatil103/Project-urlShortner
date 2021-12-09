@@ -21,6 +21,7 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "mongoose": "^6.1.0",
+    "node-url-shortener": "^2.0.0",
     "shortid": "^2.2.16",
     "valid-url": "^1.0.9"
   }
