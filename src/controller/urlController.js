@@ -1,12 +1,13 @@
 const urlModel = require('../models/urlModel')
-const validUrl = require('valid-url');
+const mongoose = require('mongoose')
 const shortid = require('shortid')
 
-var shortUrl = require('node-url-shortener');
-const nodeUrlShortener = require('node-url-shortener');
+
+//var shortUrl = require('node-url-shortener');
 
 
-//!-------------------functions------------------------//
+
+//-------------------functions------------------------//
 const isValid = function (value) {
     if (typeof value === 'undefined' || value === null) return false
     if (typeof value === 'string' && value.trim().length === 0) return false
@@ -14,27 +15,27 @@ const isValid = function (value) {
     return true;
 }
 
+
+
+//-------------------------------------------------------//
 const baseUrl = 'http://localhost:3000'
 const urlShortner = async function (req, res) {
     try {
-        const { longUrl } = req.body
+        let { longUrl } = req.body
+
+
 
         if (!isValid(longUrl)) {
             res.status(400).send({ status: false, message: "longUrl is required " })
             return
         }
-        if(!/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/.test(longUrl)){
-           res.status(400).send({ status: false, message: "longUrl is not valid " })
-        }
-        // if (!validUrl.isUri(longUrl.trim())) {
-        //     res.status(400).send({ status: false, message: "Invalid longUrl " })
-        //     return
-        // }
+        if (!/^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(longUrl)) {
+             return res.status(400).send({ status: false, message: "longUrl is not valid " })
+         }
 
+      
+        const urlCode = shortid.generate().toLowerCase()
 
-
-        const urlCode = shortid.generate()
-        console.log(urlCode)
         let url = await urlModel.findOne({ longUrl })
         if (url) {
             return res.status(400).send({ status: false, messagae: "url already present" })
@@ -43,17 +44,14 @@ const urlShortner = async function (req, res) {
         }
 
 
-         url = {
+        url = {
             urlCode: urlCode,
             longUrl: longUrl,
             shortUrl: shortUrl
         }
 
-         await urlModel.create(url)
-        const newUrl= await urlModel.find({urlCode}).select({_id:0, createdAt:0,updatedAt:0,__v : 0})
-        ///.select
-
-
+        await urlModel.create(url)
+        const newUrl = await urlModel.findOne({ urlCode }).select({ _id: 0, createdAt: 0, updatedAt: 0, __v: 0 })
         res.status(201).send({ status: true, data: newUrl })
 
     } catch (err) {
@@ -63,16 +61,27 @@ const urlShortner = async function (req, res) {
 
 
 const urlCode = async function (req, res) {
+    try {
+        const urlCode = req.params.urlCode
 
-        const {urlCode}=req.params
-        const url= await urlModel.findOne({urlCode:req.params.urlCode})
-        console.log(url)
+        console.log(urlCode)
 
-        if(!url){
-            return res.status(400).send({status:false, message: "No Url Found"})
-        }else {
-        res.status(200).send({status:true, data : url.longUrl})
+        if (urlCode.length === 0) {
+            res.status(400).send({ status: false, message: "No UrlCode found " })
+            return
         }
+        const url = await urlModel.findOne({ urlCode: req.params.urlCode })
+        if (!url) {
+            return res.status(400).send({ status: false, message: "No Url Found" })
+        } else {
+            let oldUrl = url.longUrl
+            return res.status(302).redirect(oldUrl)
+        }
+    } catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
+    }
 }
 
-module.exports= { urlShortner ,urlCode}
+
+
+module.exports = { urlShortner, urlCode }
