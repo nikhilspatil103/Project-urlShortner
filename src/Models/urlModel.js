@@ -6,7 +6,7 @@ const validUrl = require('valid-url')
 
 const urlSchema = new mongoose.Schema({
     longUrl: {
-        type: url,
+        type: String,
         require: true,
         trim: true,
         unique: true
