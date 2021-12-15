@@ -67,12 +67,7 @@ const urlShortner = async function (req, res) {
         //-------------------------------Validation Ends--------------------------------------------//
 
 
-        let shortUrl = await redisClient.GET_ASYNC(`${checkUrl}`)
-        if (shortUrl) {
-            let cacheData = JSON.parse(shortUrl)
-            let cacheData1 = { longUrl: cacheData.longUrl, shortUrl: cacheData.shortUrl, urlCode: cacheData.urlCode }
-            return res.status(200).send({ satus: true, msg: "ShortUrl already generated in cache", data: cacheData1 })
-        }
+
 
         let findUrlInDb = await urlModel.findOne({ longUrl: checkUrl }).select({ _id: 0, createdAt: 0, updatedAt: 0, __v: 0 })
         if (findUrlInDb) {
