@@ -1,8 +1,8 @@
 
 const mongoose = require('mongoose')
 
-const url = require('mongoose-type-url');
-const validUrl = require('valid-url')
+// const url = require('mongoose-type-url');
+// const validUrl = require('valid-url')
 
 const urlSchema = new mongoose.Schema({
     longUrl: {

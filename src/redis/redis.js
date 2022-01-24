@@ -21,10 +21,7 @@ redisClient.on("connect", async function () {
 
 const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
 const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
-// redisClient.GET("d2fbxodh_" , function (err,value){
-// console.log(value)
-// })
-// bind,call and apply method
+
 module.exports = {
     SET_ASYNC,
     GET_ASYNC 
