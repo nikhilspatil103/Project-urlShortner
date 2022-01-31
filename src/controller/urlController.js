@@ -50,8 +50,8 @@ const urlShortner = async function (req, res) {
       
 
         if (validhttpsLower(checkUrl)) {
-            const regex = /^https?:\/\//
-            checkUrl = checkUrl.replace(regex, "https://")
+            const regex = /^https?:\/\// 
+            checkUrl = checkUrl.replace(regex, "https://")          
 
         }
 
@@ -68,27 +68,26 @@ const urlShortner = async function (req, res) {
 
 
 
-
+         //find shortURL in DB if its been alredy created
         let findUrlInDb = await urlModel.findOne({ longUrl: checkUrl }).select({ _id: 0, createdAt: 0, updatedAt: 0, __v: 0 })
+        
         if (findUrlInDb) {
-            await redisClient.SET_ASYNC(`${checkUrl}`, JSON.stringify(findUrlInDb))
-
             return res.status(200).send({ status: true, message: "ShortUrl already generated in DB", data: findUrlInDb })
         }
 
-        const urlCode = shortid.generate().toLowerCase()
+        const urlCode = shortid.generate().toLowerCase()   //generate unique code with shortid pakage
 
-        shortUrl = baseUrl + '/' + urlCode
+        shortUrl = baseUrl + '/' + urlCode                // concat base url with unique Id
 
         url = {urlCode: urlCode,longUrl: checkUrl,shortUrl: shortUrl}
-        await urlModel.create(url)
+        await urlModel.create(url)                        // create in DB
 
         
         const newUrl = await urlModel.findOne({ urlCode }).select({ _id: 0, createdAt: 0, updatedAt: 0, __v: 0 })
 
         
-        await redisClient.SET_ASYNC(`${urlCode}`, JSON.stringify(checkUrl))
-
+        await redisClient.SET_ASYNC(`${urlCode}`, checkUrl)     //set in redies cache key= urlCode, value=longUrl
+      
         res.status(201).send({ status: true, data: newUrl })
         
 
@@ -109,12 +108,12 @@ const urlCode = async function (req, res) {
             return
         }
 
-        let findUrlInCache = await redisClient.GET_ASYNC(`${urlCode}`)
-     
+        let findUrlInCache = await redisClient.GET_ASYNC(`${urlCode}`)      // first find URL in redies cache
+    
         if (findUrlInCache) {
-            let cacheData = JSON.parse(findUrlInCache)
+            ///let cacheData = JSON.parse(findUrlInCache)               
             
-            return res.status(302).redirect(cacheData)
+            return res.status(302).redirect(findUrlInCache)
         } else {
             const url = await urlModel.findOne({ urlCode: urlCode })
             if (!url) {
@@ -122,9 +121,9 @@ const urlCode = async function (req, res) {
             } else {
                 let oldUrl = url.longUrl
 
+                await redisClient.SET_ASYNC(`${url.urlCode}`, oldUrl)
                 
                 res.status(302).redirect(oldUrl)
-                await redisClient.SET_ASYNC(`${url.urlCode}`, JSON.stringify(url))
             }
         }
     } catch (err) {
