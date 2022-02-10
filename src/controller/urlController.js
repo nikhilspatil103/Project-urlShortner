@@ -72,6 +72,7 @@ const urlShortner = async function (req, res) {
         let findUrlInDb = await urlModel.findOne({ longUrl: checkUrl }).select({ _id: 0, createdAt: 0, updatedAt: 0, __v: 0 })
         
         if (findUrlInDb) {
+            await redisClient.SET_ASYNC(`${findUrlInDb.urlCode}`, checkUrl)
             return res.status(200).send({ status: true, message: "ShortUrl already generated in DB", data: findUrlInDb })
         }
 
